@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Boredom Buster Canvas</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden; /* Prevents scrollbars from appearing */
+        }
+        #paintCanvas {
+            display: block; /* Removes any default spacing around the canvas */
+            background-color: #ffffff;
+        }
+    </style>
+</head>
+<body class="bg-gray-800 flex flex-col items-center justify-center font-sans">
+    
+    <!-- Header and Controls -->
+    <div class="bg-gray-900 text-white p-4 w-full text-center shadow-lg z-10">
+        <h1 class="text-2xl font-bold">Interactive Canvas</h1>
+        <p class="text-sm text-gray-400">Click and drag (or use your finger) to draw!</p>
+        <button id="clearButton" class="mt-2 px-4 py-2 bg-red-600 hover:bg-red-700 rounded-md font-semibold transition-colors">Clear Canvas</button>
+    </div>
+
+    <!-- The Canvas Element -->
+    <!-- This is our drawing surface. JavaScript will interact with this. -->
+    <canvas id="paintCanvas"></canvas>
+
+    <script>
+        // Wait for the entire page to load before running our script
+        window.addEventListener('load', () => {
+            const canvas = document.getElementById('paintCanvas');
+            const clearButton = document.getElementById('clearButton');
+            
+            // The 'context' is the object we use to actually draw on the canvas
+            const ctx = canvas.getContext('2d');
+
+            // --- State Variables ---
+            // This variable tracks whether the mouse button is pressed down (or finger is on the screen)
+            let isDrawing = false;
+            // These store the last known x and y coordinates of the cursor
+            let lastX = 0;
+            let lastY = 0;
+
+            // --- Canvas Resizing ---
+            // Function to set the canvas size to fill its container
+            function resizeCanvas() {
+                // We set the canvas's internal resolution to match its displayed size
+                // This prevents drawings from looking blurry or pixelated
+                canvas.width = window.innerWidth;
+                // We subtract the height of the header to make it fit perfectly
+                const headerHeight = document.querySelector('.bg-gray-900').offsetHeight;
+                canvas.height = window.innerHeight - headerHeight;
+
+                // --- Drawing Style Configuration ---
+                // When we resize, the canvas context gets reset, so we re-apply styles.
+                ctx.strokeStyle = '#000000'; // Color of the line
+                ctx.lineWidth = 5;         // Thickness of the line
+                ctx.lineCap = 'round';     // Makes the ends of the lines smooth and round
+                ctx.lineJoin = 'round';    // Makes the corners where lines meet smooth and round
+            }
+            
+            // Call resizeCanvas initially to set the size
+            resizeCanvas();
+            // Add an event listener to resize the canvas whenever the window size changes
+            window.addEventListener('resize', resizeCanvas);
+
+
+            // --- Drawing Logic ---
+            // A reusable function to handle the start of a drawing action
+            function startDrawing(e) {
+                isDrawing = true;
+                // Get the current position of the cursor/finger
+                [lastX, lastY] = getMousePos(e);
+            }
+
+            // A reusable function to handle the drawing action itself
+            function draw(e) {
+                // Stop the function if we're not in drawing mode
+                if (!isDrawing) return;
+
+                // Prevent default browser actions, like scrolling on touch devices
+                e.preventDefault();
+
+                // Get the new cursor position
+                const [x, y] = getMousePos(e);
+
+                // --- The core drawing commands ---
+                ctx.beginPath(); // Start a new path
+                ctx.moveTo(lastX, lastY); // Move the "pen" to the last known position
+                ctx.lineTo(x, y); // Draw a line to the new position
+                ctx.stroke(); // Render the line on the canvas
+
+                // Update the last known position for the next movement
+                [lastX, lastY] = [x, y];
+            }
+
+            // A reusable function to handle the end of a drawing action
+            function stopDrawing() {
+                isDrawing = false;
+            }
+            
+            // --- Helper function to get correct coordinates for both mouse and touch events ---
+            function getMousePos(e) {
+                const rect = canvas.getBoundingClientRect(); // Gets the size and position of the canvas
+                // Check if it's a touch event
+                if (e.touches && e.touches.length > 0) {
+                    return [
+                        e.touches[0].clientX - rect.left,
+                        e.touches[0].clientY - rect.top
+                    ];
+                }
+                // Otherwise, it's a mouse event
+                return [
+                    e.clientX - rect.left,
+                    e.clientY - rect.top
+                ];
+            }
+
+            // --- Event Listeners ---
+            // Mouse Events
+            canvas.addEventListener('mousedown', startDrawing);
+            canvas.addEventListener('mousemove', draw);
+            canvas.addEventListener('mouseup', stopDrawing);
+            canvas.addEventListener('mouseout', stopDrawing); // Stop drawing if mouse leaves canvas
+
+            // Touch Events for mobile support
+            canvas.addEventListener('touchstart', startDrawing);
+            canvas.addEventListener('touchmove', draw);
+            canvas.addEventListener('touchend', stopDrawing);
+
+            // --- Clear Button Functionality ---
+            clearButton.addEventListener('click', () => {
+                // The clearRect method erases a rectangular area of the canvas
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+            });
+        });
+    </script>
+</body>
+</html>

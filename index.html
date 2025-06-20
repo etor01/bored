@@ -1,1 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BoredDotCom</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body,html{
+      margin: 0;
+      padding:0;
+      width: 100%;
+      height:100%;
+      overflow: hidden;
+    }
+    #paintCanvas{
+      display: block;
+      background-color: #cdcdcd;
+    }
+  </style>
+</head>
+<body class="bg-gray-800 flex flex-col items-center justify-center font-sans">
+  
+  <div class="bg-gray-900 text-white p-4 w-full text-center shadow-lg z-10">
+    <h1 class="text-5xl font-bold">
+      Draw your Boredom Here
+    </h1>
+    <p class="text-sm text-gray-400">Click and drag or use your fingers (if you use a touch interface)</p>
+    <button id="clearBtn" class="mt-2 px-4 py-2 bg-red-600 hover:bg-red-700 rounded-md font-semibold transition-colors">Clear Canvas</button>
+  </div>
 
+  <!--Canvas starts here-->
+  <canvas id="paintCanvas"></canvas>
+  
+  <script>
+    window.addEventListener('load', () => {
+      const canvas = document.getElementById('paintCanvas');
+      const clearBtn = document.getElementById('clearBtn');
+
+      const ctx = canvas.getContext('2d');
+
+      let isDrawing = false;
+      let lastX = 0;
+      let lastY = 0;
+
+      function resizeCanvas() {
+        canvas.width = window.innerWidth;
+        const headerHeight = document.querySelector('.bg-gray-900').offsetHeight;
+        canvas.height = window.innerHeight - headerHeight;
+
+        ctx.strokeStyle = '#000000';
+        ctx.lineWidth = 5;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+      }
+
+      resizeCanvas();
+      window.addEventListener('resize', resizeCanvas);
+
+      function startDrawing(e){
+        isDrawing = true;
+        [lastX, lastY] = getMousePos(e);
+      }
+      function draw(e){
+        if (!isDrawing) return;
+
+        e.preventDefault();
+
+        const [x,y] = getMousePos(e);
+
+        ctx.beginPath();
+        ctx.moveTo(lastX, lastY);
+        ctx.lineTo(x,y);
+        ctx.stroke();
+        [lastX,lastY] = [x,y];
+      }
+      function getMousePos(e){
+        const rect = canvas.getBoundingClientRect();
+        if(e.touches && e.touches.length > 0){
+          return [ 
+            e.touches[0].clientX - rect.left,
+            e.touches[0].clientY - rect.top
+          ];
+        }
+        return [
+          e.clientX - rect.left,
+          e.clientY - rect.top
+        ];
+      }
+
+      canvas.addEventListener('mousedown', startDrawing);
+      canvas.addEventListener('mousemove', draw);
+      canvas.addEventListener('mouseup', stopDrawing);
+      canvas.addEventListener('mouseout', stopDrawing); 
+      canvas.addEventListener('touchstart', startDrawing);
+      canvas.addEventListener('touchmove', draw);
+      canvas.addEventListener('touchend', stopDrawing);
+
+      function stopDrawing(e) {
+        isDrawing = false;
+      }
+
+      clearBtn.addEventListener('click', ()=> {
+        ctx.clearRect(0,0, canvas.width, canvas.height);
+      });
+
+    });
+  </script>
+</body>
+</html>
